@@ -1,0 +1,27 @@
+*****************Project Report***************
+
+The program consists of three file: frame.h,   sp.c,   cbp.c
+
+sp.c: station process
+cbp.c: common bus process
+input.x: input file
+
+Structure of the input file: 
+For example: the input file of station process 1:
+1 	2 	// send frame 1, to station 2
+2	3	// send frame 2, to station 3
+3	3       // send frame 3, to station 3
+
+
+This Ethernet simulation allows three station processes communicating with one common bus process.
+
+Implementation of collision between the common bus and the stations uses the system call fcntl . The common bus and the stations both use fcntl function to set to non-blocking I/O. In the station process code, three descriptors, including stdio descriptor, stdout descriptor, and a socket descriptor to and from the common bus, are set for non-blocking mode. The four descriptors are then added to the rset and wset for calling select function. This allows the SP program to read from standard input while reading from CBP.
+
+Interrupts are implemented as the following. When a station successfully sends its first message to the common bus, by using the fcntl function, the program turns on the bit for reading in the rset without being blocked. If the collision occurs, the station will resend the first message, by performing the BEBO algorithm. Otherwise, it will start sending the second part. 
+
+On the common bus process, the program contains two infinite loops. One is for the listening socket. One is for data communication.  CBP program will wait until all connections from three stations achieved. Then, it will enter the second infinite loop to start receiving the first message from a station. The CBP uses buffer_acquired to check if any message has been received from a station. At the first read from the first SP, buffer_accquired is set to true to allow reading from the SP. After reading the first message, buffer_accquired is set to false. CBP program returns back to loop. At this pointer, there are two possibilities. The function read in the CBP will return a new message from the station that acquired the CBP buffer, or from other stations. Both cases will be inspected. If the message is the second message of the acquired station, CBP will save the message. If the message is a new message from other station, CBP will inform both stations a collision. 
+
+The above description is the completion of the project. However, at run time, the CBP program cannot proceed to the second infinite loop, which is the data communication part. 
+
+Compilation of the project:
+	Run the Makefile in the Project folder
